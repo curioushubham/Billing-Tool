@@ -108,7 +108,7 @@ def invoice_pdf_view(request, pk):
     invoice = get_object_or_404(Invoice, pk=pk)
     pdf = generate_invoice_pdf(invoice)
     if pdf is None:
-        messages.error(request, 'PDF generation requires WeasyPrint. Install it with: pip install weasyprint')
+        messages.error(request, 'PDF generation failed. Ensure xhtml2pdf is installed: pip install xhtml2pdf')
         return redirect('invoice_detail', pk=pk)
     response = HttpResponse(pdf, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{invoice.invoice_number}.pdf"'
