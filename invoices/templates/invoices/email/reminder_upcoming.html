@@ -1,0 +1,23 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html><body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
+<div style="background: #2c3e50; color: white; padding: 20px; text-align: center;">
+    <h2 style="margin: 0;">Payment Reminder</h2>
+    <p style="margin: 5px 0 0;">{{ invoice.property_name }}</p>
+</div>
+<div style="padding: 20px;">
+    <p>Dear {{ invoice.tenant_company }},</p>
+    <p>This is a friendly reminder that your invoice <strong>{{ invoice.invoice_number }}</strong> is due on <strong>{{ invoice.due_date|date:"d-M-Y" }}</strong>.</p>
+    <div style="background: #f8f9fa; padding: 15px; border-radius: 4px; margin: 15px 0;">
+        <table style="width: 100%;">
+            <tr><td style="color: #666;">Invoice Number:</td><td style="text-align: right; font-weight: bold;">{{ invoice.invoice_number }}</td></tr>
+            <tr><td style="color: #666;">Billing Period:</td><td style="text-align: right;">{{ invoice.billing_period_start|date:"M Y" }}</td></tr>
+            <tr><td style="color: #666;">Total Amount:</td><td style="text-align: right; font-weight: bold;">Rs. {{ invoice.total_amount|intcomma }}</td></tr>
+            <tr><td style="color: #666;">Balance Due:</td><td style="text-align: right; font-weight: bold; color: #e74c3c;">Rs. {{ invoice.balance_due|intcomma }}</td></tr>
+            <tr><td style="color: #666;">Due Date:</td><td style="text-align: right; font-weight: bold;">{{ invoice.due_date|date:"d-M-Y" }}</td></tr>
+        </table>
+    </div>
+    <p>Please ensure timely payment to avoid any late fees. The invoice PDF is attached for your reference.</p>
+    <p>Thank you,<br>{{ invoice.property_name }} Management</p>
+</div>
+</body></html>

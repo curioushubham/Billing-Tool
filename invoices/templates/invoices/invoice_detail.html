@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}{{ invoice.invoice_number }} - Billing Tool{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'invoice_list' %}">Invoices</a></li>
+<li class="breadcrumb-item active">{{ invoice.invoice_number }}</li>
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4>{{ invoice.invoice_number }}
+        <span class="badge bg-{% if invoice.status == 'paid' %}success{% elif invoice.status == 'overdue' %}danger{% elif invoice.status == 'partially_paid' %}warning{% elif invoice.status == 'cancelled' %}secondary{% else %}primary{% endif %}">
+            {{ invoice.get_status_display }}
+        </span>
+    </h4>
+    <div class="d-flex gap-2">
+        <a href="{% url 'invoice_pdf' invoice.pk %}" class="btn btn-outline-danger" target="_blank"><i class="bi bi-file-pdf"></i> Download PDF</a>
+        {% if user.role == 'admin' and invoice.status != 'cancelled' and invoice.status != 'paid' %}
+        <form method="post" action="{% url 'cancel_invoice' invoice.pk %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Cancel this invoice?')">Cancel Invoice</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Invoice Details</div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <tr><td class="text-muted">Invoice #</td><td>{{ invoice.invoice_number }}</td></tr>
+                    <tr><td class="text-muted">Issue Date</td><td>{{ invoice.issue_date|date:"d-M-Y" }}</td></tr>
+                    <tr><td class="text-muted">Due Date</td><td>{{ invoice.due_date|date:"d-M-Y" }}</td></tr>
+                    <tr><td class="text-muted">Billing Period</td><td>{{ invoice.billing_period_start|date:"d-M-Y" }} to {{ invoice.billing_period_end|date:"d-M-Y" }}</td></tr>
+                    <tr><td class="text-muted">Property</td><td>{{ invoice.property_name }}</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Tenant Details</div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <tr><td class="text-muted">Company</td><td>{{ invoice.tenant_company }}</td></tr>
+                    <tr><td class="text-muted">Contact</td><td>{{ invoice.tenant_name }}</td></tr>
+                    <tr><td class="text-muted">Unit</td><td>{{ invoice.tenant_unit }}</td></tr>
+                    <tr><td class="text-muted">GSTIN</td><td>{{ invoice.tenant_gst|default:"-" }}</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Charges</div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <tr><td>Rent</td><td class="text-end">{{ invoice.rent_amount|intcomma }}</td></tr>
+                    {% if invoice.maintenance_charges %}<tr><td>Maintenance</td><td class="text-end">{{ invoice.maintenance_charges|intcomma }}</td></tr>{% endif %}
+                    {% if invoice.parking_charges %}<tr><td>Parking</td><td class="text-end">{{ invoice.parking_charges|intcomma }}</td></tr>{% endif %}
+                    {% if invoice.electricity_charges %}<tr><td>Electricity</td><td class="text-end">{{ invoice.electricity_charges|intcomma }}</td></tr>{% endif %}
+                    {% if invoice.other_charges %}<tr><td>{{ invoice.other_charges_description|default:"Other" }}</td><td class="text-end">{{ invoice.other_charges|intcomma }}</td></tr>{% endif %}
+                    <tr class="table-light"><td><strong>Subtotal</strong></td><td class="text-end"><strong>{{ invoice.subtotal|intcomma }}</strong></td></tr>
+                    {% if invoice.cgst_amount %}<tr><td>CGST @ {{ invoice.gst_percentage|floatformat:0|divisibleby:2 }}%</td><td class="text-end">{{ invoice.cgst_amount|intcomma }}</td></tr>{% endif %}
+                    {% if invoice.sgst_amount %}<tr><td>SGST</td><td class="text-end">{{ invoice.sgst_amount|intcomma }}</td></tr>{% endif %}
+                    {% if invoice.igst_amount %}<tr><td>IGST @ {{ invoice.gst_percentage }}%</td><td class="text-end">{{ invoice.igst_amount|intcomma }}</td></tr>{% endif %}
+                    <tr class="table-dark"><td><strong>Total</strong></td><td class="text-end"><strong>{{ invoice.total_amount|intcomma }}</strong></td></tr>
+                    <tr><td>Amount Paid</td><td class="text-end text-success">{{ invoice.amount_paid|intcomma }}</td></tr>
+                    <tr class="table-warning"><td><strong>Balance Due</strong></td><td class="text-end"><strong>{{ invoice.balance_due|intcomma }}</strong></td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Payments</span>
+                {% if user.is_accountant and invoice.status != 'paid' and invoice.status != 'cancelled' %}
+                <a href="{% url 'add_payment' invoice.pk %}" class="btn btn-sm btn-primary">Add Payment</a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <thead><tr><th>Date</th><th>Amount</th><th>Mode</th><th>Txn ID</th></tr></thead>
+                    <tbody>
+                        {% for pmt in payments %}
+                        <tr>
+                            <td>{{ pmt.payment_date|date:"d-M-Y" }}</td>
+                            <td>{{ pmt.amount|intcomma }}</td>
+                            <td>{{ pmt.get_payment_mode_display }}</td>
+                            <td>{{ pmt.transaction_id|default:"-" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted">No payments recorded.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

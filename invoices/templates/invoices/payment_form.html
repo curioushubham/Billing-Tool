@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Record Payment - Billing Tool{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'invoice_list' %}">Invoices</a></li>
+<li class="breadcrumb-item"><a href="{% url 'invoice_detail' invoice.pk %}">{{ invoice.invoice_number }}</a></li>
+<li class="breadcrumb-item active">Record Payment</li>
+{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card mb-3">
+            <div class="card-header">Invoice Summary</div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <tr><td class="text-muted">Invoice</td><td>{{ invoice.invoice_number }}</td></tr>
+                    <tr><td class="text-muted">Tenant</td><td>{{ invoice.tenant_company }}</td></tr>
+                    <tr><td class="text-muted">Total Amount</td><td>{{ invoice.total_amount|intcomma }}</td></tr>
+                    <tr><td class="text-muted">Already Paid</td><td>{{ invoice.amount_paid|intcomma }}</td></tr>
+                    <tr><td class="text-muted"><strong>Balance Due</strong></td><td><strong>{{ invoice.balance_due|intcomma }}</strong></td></tr>
+                </table>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header"><h5 class="mb-0">Record Payment</h5></div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {% for field in form %}
+                    <div class="mb-3">
+                        <label class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.errors %}<div class="text-danger small">{{ field.errors.0 }}</div>{% endif %}
+                    </div>
+                    {% endfor %}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Record Payment</button>
+                        <a href="{% url 'invoice_detail' invoice.pk %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

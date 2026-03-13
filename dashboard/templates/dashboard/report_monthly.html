@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Monthly Revenue - Billing Tool{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item active">Monthly Revenue</li>
+{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4>Monthly Revenue - {{ month_name }}</h4>
+    <a href="{% url 'export_report' 'monthly' %}?year={{ year }}&month={{ month }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-download"></i> Export CSV</a>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body py-2">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-auto"><input type="number" name="year" class="form-control form-control-sm" value="{{ year }}" min="2020" max="2030"></div>
+            <div class="col-auto"><input type="number" name="month" class="form-control form-control-sm" value="{{ month }}" min="1" max="12"></div>
+            <div class="col-auto"><button class="btn btn-sm btn-outline-primary">View</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4"><div class="card text-center p-3"><div class="text-muted small">Total Billed</div><h4 class="text-primary">{{ totals.total_billed|default:0|floatformat:0|intcomma }}</h4></div></div>
+    <div class="col-md-4"><div class="card text-center p-3"><div class="text-muted small">Total Paid</div><h4 class="text-success">{{ totals.total_paid|default:0|floatformat:0|intcomma }}</h4></div></div>
+    <div class="col-md-4"><div class="card text-center p-3"><div class="text-muted small">Outstanding</div><h4 class="text-danger">{{ totals.total_balance|default:0|floatformat:0|intcomma }}</h4></div></div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr><th>Invoice #</th><th>Tenant</th><th>Property</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+                {% for inv in invoices %}
+                <tr>
+                    <td><a href="{% url 'invoice_detail' inv.pk %}">{{ inv.invoice_number }}</a></td>
+                    <td>{{ inv.tenant_company }}</td>
+                    <td>{{ inv.property_name }}</td>
+                    <td>{{ inv.total_amount|intcomma }}</td>
+                    <td>{{ inv.amount_paid|intcomma }}</td>
+                    <td>{{ inv.balance_due|intcomma }}</td>
+                    <td><span class="badge bg-{% if inv.status == 'paid' %}success{% elif inv.status == 'overdue' %}danger{% elif inv.status == 'partially_paid' %}warning{% else %}primary{% endif %}">{{ inv.get_status_display }}</span></td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted py-4">No invoices for this month.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

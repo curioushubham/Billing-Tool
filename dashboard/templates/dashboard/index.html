@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Dashboard - Billing Tool{% endblock %}
+{% block content %}
+<h4 class="mb-4">Dashboard</h4>
+
+<!-- KPI Cards -->
+<div class="row mb-4">
+    <div class="col-md-4 col-lg-2 mb-3">
+        <div class="card border-primary h-100">
+            <div class="card-body text-center">
+                <div class="text-muted small">Monthly Billing</div>
+                <h4 class="text-primary mb-0">{{ total_billed|floatformat:0|intcomma }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-lg-2 mb-3">
+        <div class="card border-success h-100">
+            <div class="card-body text-center">
+                <div class="text-muted small">Collected</div>
+                <h4 class="text-success mb-0">{{ total_collected|floatformat:0|intcomma }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-lg-2 mb-3">
+        <div class="card border-warning h-100">
+            <div class="card-body text-center">
+                <div class="text-muted small">Pending</div>
+                <h4 class="text-warning mb-0">{{ pending_amount|floatformat:0|intcomma }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-lg-2 mb-3">
+        <div class="card border-danger h-100">
+            <div class="card-body text-center">
+                <div class="text-muted small">Overdue</div>
+                <h4 class="text-danger mb-0">{{ overdue_amount|floatformat:0|intcomma }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-lg-2 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="text-muted small">Active Tenants</div>
+                <h4 class="mb-0">{{ active_tenants }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 col-lg-2 mb-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="text-muted small">Properties</div>
+                <h4 class="mb-0">{{ active_properties }}</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="row mb-4">
+    <div class="col-lg-8 mb-3">
+        <div class="card h-100">
+            <div class="card-header">Monthly Revenue Trend</div>
+            <div class="card-body">
+                <canvas id="monthlyChart" height="120"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 mb-3">
+        <div class="card h-100">
+            <div class="card-header">Property-wise Revenue</div>
+            <div class="card-body">
+                <canvas id="propertyChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tables -->
+<div class="row">
+    <div class="col-lg-4 mb-3">
+        <div class="card h-100">
+            <div class="card-header text-danger">Overdue Invoices</div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        {% for inv in overdue_invoices %}
+                        <tr>
+                            <td><a href="{% url 'invoice_detail' inv.pk %}">{{ inv.invoice_number }}</a></td>
+                            <td>{{ inv.tenant_company|truncatechars:20 }}</td>
+                            <td class="text-end text-danger">{{ inv.balance_due|intcomma }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td class="text-center text-muted py-3" colspan="3">No overdue invoices</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 mb-3">
+        <div class="card h-100">
+            <div class="card-header text-warning">Due This Week</div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        {% for inv in due_this_week %}
+                        <tr>
+                            <td><a href="{% url 'invoice_detail' inv.pk %}">{{ inv.invoice_number }}</a></td>
+                            <td>{{ inv.due_date|date:"d-M" }}</td>
+                            <td class="text-end">{{ inv.balance_due|intcomma }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td class="text-center text-muted py-3" colspan="3">No invoices due this week</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4 mb-3">
+        <div class="card h-100">
+            <div class="card-header text-success">Recent Payments</div>
+            <div class="card-body p-0">
+                <table class="table table-sm mb-0">
+                    <tbody>
+                        {% for pmt in recent_payments %}
+                        <tr>
+                            <td><a href="{% url 'invoice_detail' pmt.invoice.pk %}">{{ pmt.invoice.invoice_number }}</a></td>
+                            <td>{{ pmt.payment_date|date:"d-M" }}</td>
+                            <td class="text-end text-success">{{ pmt.amount|intcomma }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td class="text-center text-muted py-3" colspan="3">No recent payments</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+// Monthly Revenue Chart
+const monthlyData = {{ monthly_trend|safe }};
+new Chart(document.getElementById('monthlyChart'), {
+    type: 'bar',
+    data: {
+        labels: monthlyData.map(d => d.month),
+        datasets: [
+            { label: 'Billed', data: monthlyData.map(d => d.billed), backgroundColor: 'rgba(54, 162, 235, 0.7)' },
+            { label: 'Collected', data: monthlyData.map(d => d.collected), backgroundColor: 'rgba(75, 192, 192, 0.7)' },
+        ]
+    },
+    options: { responsive: true, scales: { y: { beginAtZero: true } } }
+});
+
+// Property Revenue Chart
+const propData = {{ property_revenue|safe }};
+if (propData.length > 0) {
+    new Chart(document.getElementById('propertyChart'), {
+        type: 'doughnut',
+        data: {
+            labels: propData.map(d => d.property__name),
+            datasets: [{
+                data: propData.map(d => d.total),
+                backgroundColor: ['#3498db', '#2ecc71', '#e74c3c', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#34495e'],
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12 } } } }
+    });
+}
+</script>
+{% endblock %}

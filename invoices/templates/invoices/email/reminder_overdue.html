@@ -1,0 +1,22 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html><body style="font-family: Arial, sans-serif; color: #333; max-width: 600px; margin: 0 auto;">
+<div style="background: #c0392b; color: white; padding: 20px; text-align: center;">
+    <h2 style="margin: 0;">PAYMENT OVERDUE</h2>
+    <p style="margin: 5px 0 0;">{{ invoice.property_name }}</p>
+</div>
+<div style="padding: 20px;">
+    <p>Dear {{ invoice.tenant_company }},</p>
+    <p>Your invoice <strong>{{ invoice.invoice_number }}</strong> is now <strong>overdue</strong>. The payment was due on {{ invoice.due_date|date:"d-M-Y" }}.</p>
+    <div style="background: #f8d7da; padding: 15px; border-radius: 4px; margin: 15px 0; border-left: 4px solid #c0392b;">
+        <table style="width: 100%;">
+            <tr><td style="color: #666;">Invoice Number:</td><td style="text-align: right; font-weight: bold;">{{ invoice.invoice_number }}</td></tr>
+            <tr><td style="color: #666;">Outstanding Amount:</td><td style="text-align: right; font-weight: bold; color: #c0392b; font-size: 20px;">Rs. {{ invoice.balance_due|intcomma }}</td></tr>
+            <tr><td style="color: #666;">Due Date:</td><td style="text-align: right; font-weight: bold; color: #c0392b;">{{ invoice.due_date|date:"d-M-Y" }} (OVERDUE)</td></tr>
+        </table>
+    </div>
+    <p><strong>Please make the payment immediately.</strong> Continued non-payment may result in additional charges.</p>
+    <p>If you have already made the payment, please disregard this reminder and share the payment details with us.</p>
+    <p>Thank you,<br>{{ invoice.property_name }} Management</p>
+</div>
+</body></html>

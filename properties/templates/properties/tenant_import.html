@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Import Tenants - Billing Tool{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+<li class="breadcrumb-item"><a href="{% url 'tenant_list' %}">Tenants</a></li>
+<li class="breadcrumb-item active">Import</li>
+{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header"><h5 class="mb-0">Bulk Import Tenants</h5></div>
+            <div class="card-body">
+                <p class="text-muted">Upload an Excel file (.xlsx) with tenant data. The file must have these columns:</p>
+                <div class="bg-light p-3 rounded mb-3">
+                    <code>Tenant Name, Company Name, Property, Unit Number, Rent Amount, Maintenance Charges, Parking Charges, GST Number, Billing Cycle, Lease Start Date, Lease End Date, Payment Due Day</code>
+                </div>
+                <ul class="text-muted small">
+                    <li>Property names must match existing properties exactly</li>
+                    <li>Dates should be in YYYY-MM-DD format</li>
+                    <li>Billing Cycle: "monthly" or "quarterly"</li>
+                    <li>Payment Due Day: 1 to 28</li>
+                    <li>Duplicate unit numbers for the same property will be skipped</li>
+                </ul>
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Excel File</label>
+                        {{ form.file }}
+                    </div>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-upload"></i> Import</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

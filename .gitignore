@@ -1,0 +1,11 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+media/
+staticfiles/
+*.log
+.DS_Store
+*.swp
+.claude/
